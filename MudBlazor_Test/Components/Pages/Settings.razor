@@ -1,0 +1,79 @@
+@page "/settings"
+@using MudBlazor
+@using MudBlazor_Test_Domain.Entities
+@using MudBlazor_Test_Domain.Repositories
+@inject ILineRepository LineRepository
+@rendermode InteractiveServer
+
+<PageTitle>Settings</PageTitle>
+
+<h3>Lines</h3>
+
+<MudTable Items="_lines">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>IP Address</MudTh>
+        <MudTh>Port</MudTh>
+        <MudTh>Default</MudTh>
+        <MudTh>Selected</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Name</MudTd>
+        <MudTd>@context.IpAddress</MudTd>
+        <MudTd>@context.Portnumber</MudTd>
+        <MudTd>@context.IsDefault</MudTd>
+        <MudTd>@context.IsSelected</MudTd>
+        <MudTd>
+            <MudButton Variant="MudBlazor.Variant.Filled" Color="MudBlazor.Color.Primary" OnClick="() => SetDefault(context)">Set Default</MudButton>
+            <MudButton Variant="MudBlazor.Variant.Filled" Color="MudBlazor.Color.Secondary" OnClick="() => SetSelected(context)">Set Selected</MudButton>
+            <MudButton Variant="MudBlazor.Variant.Filled" Color="MudBlazor.Color.Info" OnClick="() => EditLine(context)">Edit</MudButton>
+            <MudButton Variant="MudBlazor.Variant.Filled" Color="MudBlazor.Color.Error" OnClick="() => DeleteLine(context)">Delete</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+<MudButton Variant="MudBlazor.Variant.Filled" Color="MudBlazor.Color.Success" OnClick="AddLine">Add Line</MudButton>
+
+@code {
+    private List<Line> _lines = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _lines = (await LineRepository.GetAllAsync())?.ToList() ?? new();
+    }
+
+    private async Task SetDefault(Line line)
+    {
+        await LineRepository.SetDefaultAsync(line);
+        await Refresh();
+    }
+
+    private async Task SetSelected(Line line)
+    {
+        await LineRepository.SetSelectedAsync(line);
+        await Refresh();
+    }
+
+    private async Task DeleteLine(Line line)
+    {
+        await LineRepository.DeleteAsync(line);
+        await Refresh();
+    }
+
+    private void EditLine(Line line)
+    {
+        // TODO: Show edit dialog
+    }
+
+    private void AddLine()
+    {
+        // TODO: Show add dialog
+    }
+
+    private async Task Refresh()
+    {
+        _lines = (await LineRepository.GetAllAsync())?.ToList() ?? new();
+        StateHasChanged();
+    }
+}

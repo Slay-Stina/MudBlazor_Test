@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Server + Blazor",
+    "Projects": [
+      {
+        "Path": "MudBlazor_Test\\MudBlazor_Test.csproj",
+        "Action": "Start",
+        "DebugTarget": "IIS Express"
+      },
+      {
+        "Path": "TCPServer\\TCPServer.csproj",
+        "Action": "Start",
+        "DebugTarget": "TCPServer"
+      }
+    ]
+  }
+]
