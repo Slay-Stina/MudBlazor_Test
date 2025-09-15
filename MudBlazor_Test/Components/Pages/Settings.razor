@@ -1,8 +1,8 @@
 @page "/settings"
 @using MudBlazor
 @using MudBlazor_Test_Domain.Entities
-@using MudBlazor_Test_Domain.Repositories
-@inject ILineRepository LineRepository
+@using MudBlazor_Test.Application
+@inject ILineService LineService
 @rendermode InteractiveServer
 
 <PageTitle>Settings</PageTitle>
@@ -40,24 +40,24 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _lines = (await LineRepository.GetAllAsync())?.ToList() ?? new();
+        _lines = (await LineService.GetAllLinesAsync()).ToList();
     }
 
     private async Task SetDefault(Line line)
     {
-        await LineRepository.SetDefaultAsync(line);
+        await LineService.SetDefaultLineAsync(line.Name);
         await Refresh();
     }
 
     private async Task SetSelected(Line line)
     {
-        await LineRepository.SetSelectedAsync(line);
+        await LineService.SetSelectedLineAsync(line.Name);
         await Refresh();
     }
 
     private async Task DeleteLine(Line line)
     {
-        await LineRepository.DeleteAsync(line);
+        await LineService.DeleteLineAsync(line.Name);
         await Refresh();
     }
 
@@ -73,7 +73,7 @@
 
     private async Task Refresh()
     {
-        _lines = (await LineRepository.GetAllAsync())?.ToList() ?? new();
+        _lines = (await LineService.GetAllLinesAsync()).ToList();
         StateHasChanged();
     }
 }
