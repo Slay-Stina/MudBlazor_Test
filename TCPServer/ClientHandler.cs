@@ -29,20 +29,17 @@ public class ClientHandler
 
         try
         {
-            while (true)
+            StringBuilder messageBuilder = new StringBuilder();
+            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
             {
-                StringBuilder messageBuilder = new StringBuilder();
-                while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    string part = Encoding.Unicode.GetString(buffer, 0, bytesRead);
-                    messageBuilder.Append(part);
-                    if (bytesRead < bufferSize) break;
-                }
+                string part = Encoding.Unicode.GetString(buffer, 0, bytesRead);
+                messageBuilder.Append(part);
+                if (bytesRead < bufferSize) break;
+            }
 
-                string message = messageBuilder.ToString();
-                if (string.IsNullOrEmpty(message))
-                    break;
-
+            string message = messageBuilder.ToString();
+            if (!string.IsNullOrEmpty(message))
+            {
                 Console.WriteLine($"Message received from {remoteEndPoint}: {message}");
 
                 string reply = HandleCommand(message);
