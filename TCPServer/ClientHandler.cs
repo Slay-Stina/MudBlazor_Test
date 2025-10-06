@@ -89,8 +89,6 @@ public class ClientHandler
                 if (line != null)
                 {
                     data.Lines.Add(line);
-                    if (line.IsDefault)
-                        data.DefaultLine = line;
                     return "OK";
                 }
                 return "FAIL";
@@ -105,8 +103,6 @@ public class ClientHandler
                     if (idx >= 0)
                     {
                         data.Lines[idx] = updatedLine;
-                        if (updatedLine.IsDefault)
-                            data.DefaultLine = updatedLine;
                         return "OK";
                     }
                 }
@@ -122,8 +118,6 @@ public class ClientHandler
                     if (idx >= 0)
                     {
                         data.Lines.RemoveAt(idx);
-                        if (data.DefaultLine?.Name == line.Name)
-                            data.DefaultLine = data.Lines.FirstOrDefault();
                         return "OK";
                     }
                 }
@@ -141,7 +135,6 @@ public class ClientHandler
                     if (lineToSet != null)
                     {
                         lineToSet.IsDefault = true;
-                        data.DefaultLine = lineToSet;
                         return "OK";
                     }
                 }

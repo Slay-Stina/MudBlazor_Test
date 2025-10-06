@@ -5,7 +5,6 @@ namespace TCPServer;
 
 public class DummyDatabaseModel
 {
-    public LineInfo DefaultLine { get; set; } = new();
     public List<LineInfo> Lines { get; set; } = new();
 }
 
@@ -46,7 +45,6 @@ public class DummyDatabase
     {
         var model = new DummyDatabaseModel();
         int lineCount = _random.Next(2, 6); // 2-5 lines
-        int defaultIdx = lineCount > 0 ? _random.Next(0, lineCount) : -1;
         int selectedIdx = lineCount > 0 ? _random.Next(0, lineCount) : -1;
         for (int j = 0; j < lineCount; j++)
         {
@@ -55,12 +53,10 @@ public class DummyDatabase
                 Name = $"Line_{j + 1}_{Guid.NewGuid().ToString()[..4]}",
                 IpAddress = $"192.168.1.{j + 10}",
                 Portnumber = 1000 + _random.Next(0, 9000),
-                IsDefault = j == defaultIdx,
+                IsDefault = false,
                 IsSelected = j == selectedIdx
             };
             model.Lines.Add(line);
-            if (j == defaultIdx)
-                model.DefaultLine = line;
         }
         return model;
     }
