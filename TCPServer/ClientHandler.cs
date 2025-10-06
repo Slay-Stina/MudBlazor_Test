@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using TCPServer.Models;
+using System.Threading.Tasks;
 
 namespace TCPServer;
 
@@ -17,39 +18,48 @@ public class ClientHandler
         _db = db;
     }
 
-    public void Handle()
+    public async Task Handle()
     {
-        const int bufferSize = 4096;
         var stream = _client.GetStream();
-        var buffer = new byte[bufferSize];
-        int bytesRead;
         var remoteEndPoint = _client.Client.RemoteEndPoint?.ToString() ?? "unknown";
         var ip = _client.Client.RemoteEndPoint is System.Net.IPEndPoint ipEp ? ipEp.Address.ToString() : "unknown";
         var port = _client.Client.RemoteEndPoint is System.Net.IPEndPoint ipEp2 ? ipEp2.Port : 0;
 
         try
         {
-            StringBuilder messageBuilder = new StringBuilder();
-            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                string part = Encoding.Unicode.GetString(buffer, 0, bytesRead);
-                messageBuilder.Append(part);
-                if (bytesRead < bufferSize) break;
-            }
+            using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
+            using var writer = new StreamWriter(stream, Encoding.UTF8, leaveOpen: true) { AutoFlush = true };
 
-            string message = messageBuilder.ToString();
+            string? message = await reader.ReadLineAsync();
             if (!string.IsNullOrEmpty(message))
             {
-                Console.WriteLine($"Message received from {remoteEndPoint}: {message}");
+                Console.WriteLine($"Message received from {remoteEndPoint} [{DateTime.Now}]: {message}");
 
-                string reply = HandleCommand(message);
-                byte[] replyBytes = Encoding.Unicode.GetBytes(reply);
-                stream.Write(replyBytes, 0, replyBytes.Length);
+                string reply;
+                try
+                {
+                    reply = HandleCommand(message);
+                }
+                catch (Exception ex)
+                {
+                    reply = $"ERROR: {ex.Message}";
+                    await _logger.LogAsync(new ConnectionLogEntry
+                    {
+                        IpAddress = ip,
+                        Port = port,
+                        RemoteEndPoint = remoteEndPoint,
+                        Message = message,
+                        Timestamp = DateTime.UtcNow,
+                        Success = false,
+                        Exception = ex.ToString()
+                    });
+                }
+                await writer.WriteLineAsync(reply);
             }
         }
         catch (Exception ex)
         {
-            _logger.Log(new ConnectionLogEntry
+            await _logger.LogAsync(new ConnectionLogEntry
             {
                 IpAddress = ip,
                 Port = port,
@@ -72,99 +82,59 @@ public class ClientHandler
         try
         {
             var data = _db.GetData();
-            if (message.StartsWith("GET_ALL_LINES"))
+            return message switch
             {
-                return JsonSerializer.Serialize(data);
-            }
-            else if (message.StartsWith("GET_LINE_BY_NAME:"))
-            {
-                var name = message[17..];
-                var line = data.Lines.FirstOrDefault(l => l.Name == name);
-                return line != null ? JsonSerializer.Serialize(line) : "";
-            }
-            else if (message.StartsWith("ADD_LINE:"))
-            {
-                var json = message[9..];
-                var line = JsonSerializer.Deserialize<LineInfo>(json);
-                if (line != null)
-                {
-                    data.Lines.Add(line);
-                    return "OK";
-                }
-                return "FAIL";
-            }
-            else if (message.StartsWith("UPDATE_LINE:"))
-            {
-                var json = message[12..];
-                var updatedLine = JsonSerializer.Deserialize<LineInfo>(json);
-                if (updatedLine != null)
-                {
-                    var idx = data.Lines.FindIndex(l => l.Name == updatedLine.Name);
-                    if (idx >= 0)
-                    {
-                        data.Lines[idx] = updatedLine;
-                        return "OK";
-                    }
-                }
-                return "FAIL";
-            }
-            else if (message.StartsWith("DELETE_LINE:"))
-            {
-                var json = message[12..];
-                var line = JsonSerializer.Deserialize<LineInfo>(json);
-                if (line != null)
-                {
-                    var idx = data.Lines.FindIndex(l => l.Name == line.Name);
-                    if (idx >= 0)
-                    {
-                        data.Lines.RemoveAt(idx);
-                        return "OK";
-                    }
-                }
-                return "FAIL";
-            }
-            else if (message.StartsWith("SET_DEFAULT:"))
-            {
-                var json = message[12..];
-                var line = JsonSerializer.Deserialize<LineInfo>(json);
-                if (line != null)
-                {
-                    foreach (var l in data.Lines)
-                        l.IsDefault = false;
-                    var lineToSet = data.Lines.FirstOrDefault(l => l.Name == line.Name);
-                    if (lineToSet != null)
-                    {
-                        lineToSet.IsDefault = true;
-                        return "OK";
-                    }
-                }
-                return "FAIL";
-            }
-            else if (message.StartsWith("SET_SELECTED:"))
-            {
-                var json = message[13..];
-                var line = JsonSerializer.Deserialize<LineInfo>(json);
-                if (line != null)
-                {
-                    foreach (var l in data.Lines)
-                        l.IsSelected = false;
-                    var lineToSet = data.Lines.FirstOrDefault(l => l.Name == line.Name);
-                    if (lineToSet != null)
-                    {
-                        lineToSet.IsSelected = true;
-                        return "OK";
-                    }
-                }
-                return "FAIL";
-            }
-            else
-            {
-                return "UNKNOWN_COMMAND";
-            }
+                var m when m.StartsWith("GET_ALL_LINES") => JsonSerializer.Serialize(data),
+                var m when m.StartsWith("GET_LINE_BY_NAME:") =>
+                    data.Lines.FirstOrDefault(l => l.Name == m[17..]) is LineInfo lineByName
+                        ? JsonSerializer.Serialize(lineByName)
+                        : "",
+                var m when m.StartsWith("ADD_LINE:") =>
+                    JsonSerializer.Deserialize<LineInfo>(m[9..]) is LineInfo addLine
+                        ? AddLine(data, addLine)
+                        : "FAIL",
+                var m when m.StartsWith("UPDATE_LINE:") =>
+                    JsonSerializer.Deserialize<LineInfo>(m[12..]) is LineInfo updatedLine
+                        ? UpdateLine(data, updatedLine)
+                        : "FAIL",
+                var m when m.StartsWith("DELETE_LINE:") =>
+                    JsonSerializer.Deserialize<LineInfo>(m[12..]) is LineInfo delLine
+                        ? DeleteLine(data, delLine)
+                        : "FAIL",
+                _ => "UNKNOWN_COMMAND"
+            };
         }
         catch (Exception ex)
         {
             return $"ERROR: {ex.Message}";
         }
+    }
+
+    private static string AddLine(DummyDatabaseModel data, LineInfo line)
+    {
+        data.Lines.Add(line);
+        return "OK";
+    }
+
+    private static string UpdateLine(DummyDatabaseModel data, LineInfo updatedLine)
+    {
+        var idx = data.Lines.FindIndex(l => l.Name == updatedLine.Name);
+        if (idx >= 0)
+        {
+            data.Lines[idx] = updatedLine;
+            return "OK";
+        }
+        return "FAIL";
+    }
+
+    private static string DeleteLine(DummyDatabaseModel data, LineInfo delLine)
+    {
+        var idx = data.Lines.FindIndex(l => l.Name == delLine.Name);
+        if (idx >= 0)
+        {
+            data.Lines.RemoveAt(idx);
+            return "OK";
+        }
+        return "FAIL";
     }
 }

@@ -15,7 +15,7 @@ public class Server
         _db = db;
     }
 
-    public void Start()
+    public async Task StartAsync()
     {
         IPEndPoint ep = new IPEndPoint(IPAddress.Any, _port);
         TcpListener server = new TcpListener(ep);
@@ -24,8 +24,8 @@ public class Server
 
         while (true)
         {
-            var client = server.AcceptTcpClient();
-            Task.Run(() => new ClientHandler(client, _db).Handle());
+            var client = await server.AcceptTcpClientAsync();
+            _ = Task.Run(async () => await new ClientHandler(client, _db).Handle());
         }
     }
 }
