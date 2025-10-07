@@ -3,15 +3,11 @@ using TCPServer.Models;
 
 namespace TCPServer;
 
-public class DummyDatabaseModel
-{
-    public List<LineInfo> Lines { get; set; } = new();
-}
-
+// The database is now just a List<LineInfo>
 public class DummyDatabase
 {
     private readonly string _filePath = "lines.json";
-    private DummyDatabaseModel _data;
+    private List<LineInfo> _data;
     private static readonly Random _random = new();
 
     public DummyDatabase()
@@ -21,18 +17,18 @@ public class DummyDatabase
 
     public void LogConnection(LineInfo line)
     {
-        _data.Lines.Add(line);
+        _data.Add(line);
         Save();
     }
 
-    public DummyDatabaseModel GetData() => _data;
+    public List<LineInfo> GetData() => _data;
 
     private void Load()
     {
         if (File.Exists(_filePath))
         {
             var json = File.ReadAllText(_filePath);
-            _data = JsonSerializer.Deserialize<DummyDatabaseModel>(json) ?? GenerateRandomData();
+            _data = JsonSerializer.Deserialize<List<LineInfo>>(json) ?? GenerateRandomData();
         }
         else
         {
@@ -41,9 +37,9 @@ public class DummyDatabase
         }
     }
 
-    private DummyDatabaseModel GenerateRandomData()
+    private List<LineInfo> GenerateRandomData()
     {
-        var model = new DummyDatabaseModel();
+        var list = new List<LineInfo>();
         int lineCount = _random.Next(2, 6); // 2-5 lines
         int selectedIdx = lineCount > 0 ? _random.Next(0, lineCount) : -1;
         for (int j = 0; j < lineCount; j++)
@@ -56,9 +52,9 @@ public class DummyDatabase
                 IsDefault = false,
                 IsSelected = j == selectedIdx
             };
-            model.Lines.Add(line);
+            list.Add(line);
         }
-        return model;
+        return list;
     }
 
     private void Save()

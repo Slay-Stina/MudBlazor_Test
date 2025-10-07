@@ -86,7 +86,7 @@ public class ClientHandler
             {
                 var m when m.StartsWith("GET_ALL_LINES") => JsonSerializer.Serialize(data),
                 var m when m.StartsWith("GET_LINE_BY_NAME:") =>
-                    data.Lines.FirstOrDefault(l => l.Name == m[17..]) is LineInfo lineByName
+                    data.FirstOrDefault(l => l.Name == m[17..]) is LineInfo lineByName
                         ? JsonSerializer.Serialize(lineByName)
                         : "",
                 var m when m.StartsWith("ADD_LINE:") =>
@@ -110,29 +110,29 @@ public class ClientHandler
         }
     }
 
-    private static string AddLine(DummyDatabaseModel data, LineInfo line)
+    private static string AddLine(List<LineInfo> data, LineInfo line)
     {
-        data.Lines.Add(line);
+        data.Add(line);
         return "OK";
     }
 
-    private static string UpdateLine(DummyDatabaseModel data, LineInfo updatedLine)
+    private static string UpdateLine(List<LineInfo> data, LineInfo updatedLine)
     {
-        var idx = data.Lines.FindIndex(l => l.Name == updatedLine.Name);
+        var idx = data.FindIndex(l => l.Name == updatedLine.Name);
         if (idx >= 0)
         {
-            data.Lines[idx] = updatedLine;
+            data[idx] = updatedLine;
             return "OK";
         }
         return "FAIL";
     }
 
-    private static string DeleteLine(DummyDatabaseModel data, LineInfo delLine)
+    private static string DeleteLine(List<LineInfo> data, LineInfo delLine)
     {
-        var idx = data.Lines.FindIndex(l => l.Name == delLine.Name);
+        var idx = data.FindIndex(l => l.Name == delLine.Name);
         if (idx >= 0)
         {
-            data.Lines.RemoveAt(idx);
+            data.RemoveAt(idx);
             return "OK";
         }
         return "FAIL";
