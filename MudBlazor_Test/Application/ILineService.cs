@@ -1,7 +1,4 @@
 using MudBlazor_Test_Domain.Entities;
-using MudBlazor_Test.Repositories;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace MudBlazor_Test.Application;
 

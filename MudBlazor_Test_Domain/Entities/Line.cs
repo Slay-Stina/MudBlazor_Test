@@ -1,5 +1,3 @@
-using System;
-
 namespace MudBlazor_Test_Domain.Entities;
 
 public class Line
