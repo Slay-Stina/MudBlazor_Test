@@ -84,19 +84,19 @@ public class ClientHandler
             return message switch
             {
                 var m when m.StartsWith("GET_ALL_LINES") => JsonSerializer.Serialize(data),
-                var m when m.StartsWith("GET_LINE_BY_NAME:") =>
+                var m when m.StartsWith("GET_LINE_BY_NAME") =>
                     data.FirstOrDefault(l => l.Name == m[17..]) is LineInfo lineByName
                         ? JsonSerializer.Serialize(lineByName)
                         : "",
-                var m when m.StartsWith("ADD_LINE:") =>
+                var m when m.StartsWith("ADD_LINE") =>
                     JsonSerializer.Deserialize<LineInfo>(m[9..]) is LineInfo addLine
                         ? AddLine(data, addLine)
                         : "FAIL",
-                var m when m.StartsWith("UPDATE_LINE:") =>
+                var m when m.StartsWith("UPDATE_LINE") =>
                     JsonSerializer.Deserialize<LineInfo>(m[12..]) is LineInfo updatedLine
                         ? UpdateLine(data, updatedLine)
                         : "FAIL",
-                var m when m.StartsWith("DELETE_LINE:") =>
+                var m when m.StartsWith("DELETE_LINE") =>
                     JsonSerializer.Deserialize<LineInfo>(m[12..]) is LineInfo delLine
                         ? DeleteLine(data, delLine)
                         : "FAIL",
