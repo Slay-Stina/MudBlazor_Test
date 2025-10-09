@@ -16,12 +16,6 @@ public class DummyDatabase
         Load();
     }
 
-    public void LogConnection(LineInfo line)
-    {
-        _lines.Add(line);
-        Save();
-    }
-
     public List<LineInfo> GetData() => _lines;
 
     private void Load()
@@ -88,7 +82,7 @@ public class DummyDatabase
         return list;
     }
 
-    private void Save()
+    public void Save()
     {
         var users = JsonSerializer.Serialize(_users, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(_usersPath, users);

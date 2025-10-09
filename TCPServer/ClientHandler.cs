@@ -72,6 +72,7 @@ public class ClientHandler
         }
         finally
         {
+            _db.Save();
             _client.Close();
         }
     }
