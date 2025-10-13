@@ -42,7 +42,7 @@ public class ClientHandler
                 catch (Exception ex)
                 {
                     reply = $"ERROR: {ex.Message}";
-                    await _logger.LogAsync(new ConnectionLogEntry
+                    _logger.LogAsync(new ConnectionLogEntry
                     {
                         IpAddress = ip,
                         Port = port,
@@ -58,12 +58,12 @@ public class ClientHandler
         }
         catch (Exception ex)
         {
-            await _logger.LogAsync(new ConnectionLogEntry
+            _logger.LogAsync(new ConnectionLogEntry
             {
                 IpAddress = ip,
                 Port = port,
                 RemoteEndPoint = remoteEndPoint,
-                Message = null,
+                Message = string.Empty,
                 Timestamp = DateTime.UtcNow,
                 Success = false,
                 Exception = ex.ToString()
@@ -86,19 +86,19 @@ public class ClientHandler
             {
                 var m when m.StartsWith("GET_ALL_LINES") => JsonSerializer.Serialize(data),
                 var m when m.StartsWith("GET_LINE_BY_NAME") =>
-                    data.FirstOrDefault(l => l.Name == m[17..]) is LineInfo lineByName
+                    data.FirstOrDefault(l => l.Name == m[16..]) is LineInfo lineByName
                         ? JsonSerializer.Serialize(lineByName)
                         : "",
                 var m when m.StartsWith("ADD_LINE") =>
-                    JsonSerializer.Deserialize<LineInfo>(m[9..]) is LineInfo addLine
+                    JsonSerializer.Deserialize<LineInfo>(m[8..]) is LineInfo addLine
                         ? AddLine(data, addLine)
                         : "FAIL",
                 var m when m.StartsWith("UPDATE_LINE") =>
-                    JsonSerializer.Deserialize<LineInfo>(m[12..]) is LineInfo updatedLine
+                    JsonSerializer.Deserialize<LineInfo>(m[11..]) is LineInfo updatedLine
                         ? UpdateLine(data, updatedLine)
                         : "FAIL",
                 var m when m.StartsWith("DELETE_LINE") =>
-                    JsonSerializer.Deserialize<LineInfo>(m[12..]) is LineInfo delLine
+                    JsonSerializer.Deserialize<LineInfo>(m[11..]) is LineInfo delLine
                         ? DeleteLine(data, delLine)
                         : "FAIL",
                 _ => "UNKNOWN_COMMAND"

@@ -7,7 +7,7 @@ public class ConnectionLogger
     private readonly string _logFilePath = "connection_log.log";
     private readonly object _lock = new();
 
-    public async Task LogAsync(ConnectionLogEntry entry)
+    public void LogAsync(ConnectionLogEntry entry)
     {
         string status = entry.Success ? "Success" : "Error";
         string exception = string.IsNullOrEmpty(entry.Exception) ? "" : $" | Exception: {entry.Exception}";
@@ -24,6 +24,6 @@ public class ConnectionLogger
     // For backward compatibility
     public void Log(ConnectionLogEntry entry)
     {
-        LogAsync(entry).GetAwaiter().GetResult();
+        LogAsync(entry);
     }
 }
